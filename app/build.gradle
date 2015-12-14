@@ -25,4 +25,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:design:23.1.1'
     compile 'com.qiniu:qiniu-android-sdk:7.0.+'
+    compile files('libs/scs-android-sdk-0.0.1-SNAPSHOT.jar')
+    compile files('libs/gson-2.2.4.jar')
 }

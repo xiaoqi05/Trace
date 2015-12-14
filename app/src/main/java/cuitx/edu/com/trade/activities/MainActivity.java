@@ -5,13 +5,20 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+
+import com.sina.cloudstorage.auth.AWSCredentials;
+import com.sina.cloudstorage.auth.BasicAWSCredentials;
+import com.sina.cloudstorage.services.scs.SCS;
+import com.sina.cloudstorage.services.scs.SCSClient;
+import com.sina.cloudstorage.services.scs.model.Bucket;
+
+import java.util.List;
 
 import cuitx.edu.com.trade.R;
 
 public class MainActivity extends AppCompatActivity {
+    private SCS conn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,27 +36,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        String accessKey = "sqt3t2Yg49KXqWvwrRxj";
+        String secretKey = "d155aeb9cc905b122333047e77536e2913f8d304";
+        AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+        conn = new SCSClient(credentials);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getAllBuckets();
+            }
+        }).start();
+
+    }
+    public void getAllBuckets(){
+        List<Bucket> list = conn.listBuckets();
+        System.out.println("====getAllBuckets===="+list);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
 
-        return super.onOptionsItemSelected(item);
-    }
 }
