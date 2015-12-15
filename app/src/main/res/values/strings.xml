@@ -7,6 +7,7 @@
     <string name="error_selecting_file">选择文件出错</string>
     <string name="internal_storage">内部存储</string>
     <string name="get_upload_file_failed">获取文件失败，请重试</string>
+    <string name="note">辛苦各位兄弟姐妹了\n麻烦每天晚上10点前将收集到的数据压缩打包上传\n数据文件以XML形式保存在SD卡根目录的tracedata文件夹中</string>
 
-    
+
 </resources>

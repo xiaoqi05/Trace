@@ -1,5 +1,6 @@
 package cuitx.edu.com.trade.activities;
 
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -13,8 +14,10 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,13 +44,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String uploadFilePath;
     private TextView tv_result;
     private StringBuffer resultBuffer;
+    private ProgressDialog progressDialog;
+    private LinearLayout ll_content;
+    private boolean isUploaded = true;
     private Handler handle = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case UPLOAD_FILE:
-                    resultBuffer.append(msg.obj).append("\r\n");
-                    tv_result.setText(resultBuffer.toString());
+                    isUploaded = true;
+                    progressDialog.dismiss();
+                    String result = msg.obj.toString();
+                    if (!result.equals("")) {
+                        resultBuffer.append("上传成功：MD5值为").append(msg.obj).append("\r\n").append("\r\n");
+                        tv_result.setText(resultBuffer.toString());
+                        Snackbar.make(ll_content, "上传成功", Snackbar.LENGTH_LONG).show();
+                    } else {
+                        resultBuffer.append("上传失败：本地文件不存在，请先点击下载文件").append("\r\n");
+                        tv_result.setText(resultBuffer.toString());
+                    }
+
             }
         }
     };
@@ -71,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 List<Bucket> list = getAllBuckets();
-
                 boolean flag = false;
                 for (Bucket bucket : list) {
                     if (bucket.getName().equals(getLocalBucket_name())) {
@@ -98,16 +113,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bt_chose = (Button) findViewById(R.id.bt_chose);
         bt_chose.setOnClickListener(this);
         bt_upload.setOnClickListener(this);
+        ll_content = (LinearLayout) findViewById(R.id.ll_content);
         setSupportActionBar(toolbar);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Me want banana!!!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
         tv_result = (TextView) findViewById(R.id.tv_result);
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.setMessage("上传中...");
 
     }
 
@@ -124,7 +143,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             final String path = FileUtils.getPath(this, uri);
                             this.uploadFilePath = path;
                             resultBuffer.append("文件地址：").append(uploadFilePath).append("\r\n");
+                            tv_result.setVisibility(View.VISIBLE);
                             tv_result.setText(resultBuffer.toString());
+                            isUploaded = false;
                         } catch (Exception e) {
                             Toast.makeText(
                                     this,
@@ -189,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             System.out.println(putObjectResult);
             return putObjectResult.getContentMd5();
         } else {
-            return "本地文件不存在，请先点击下载文件";
+            return "";
         }
     }
 
@@ -211,7 +232,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 selectUploadFile(v);
                 break;
             case R.id.bt_upload:
-                new MyAsyncTask().execute(getLocalBucket_name(), uploadFilePath);
+                if (!isUploaded) {
+                    if (!TextUtils.isEmpty(uploadFilePath)) {
+                        progressDialog.setCancelable(false);
+                        progressDialog.show();
+                        new MyAsyncTask().execute(getLocalBucket_name(), uploadFilePath);
+                    } else {
+                        Snackbar.make(v, "请先选择文件", Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+                    }
+                } else {
+                    Snackbar.make(v, "请不要重复上传", Snackbar.LENGTH_LONG).show();
+                }
                 break;
 
 
