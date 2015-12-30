@@ -32,6 +32,7 @@ import java.io.File;
 import java.util.List;
 
 import cuitx.edu.com.trade.R;
+import cuitx.edu.com.trade.util.trace.ConnectivityStatus;
 import cuitx.edu.com.trade.util.trace.DataUtil;
 import cuitx.edu.com.trade.util.trace.FileUtils;
 
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ProgressDialog progressDialog;
     private LinearLayout ll_content;
     private boolean isUploaded = true;
+    private ConnectivityStatus connectivityStatus;
     private Handler handle = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -78,27 +80,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initData() {
+        connectivityStatus = new ConnectivityStatus(this);
         resultBuffer = new StringBuffer();
         String accessKey = "sqt3t2Yg49KXqWvwrRxj";
         String secretKey = "d155aeb9cc905b122333047e77536e2913f8d304";
         AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
-        conn = new SCSClient(credentials);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                List<Bucket> list = getAllBuckets();
-                boolean flag = false;
-                for (Bucket bucket : list) {
-                    if (bucket.getName().equals(getLocalBucket_name())) {
-                        flag = true;
+        if (connectivityStatus.isConnected()) {
+            conn = new SCSClient(credentials);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    List<Bucket> list = getAllBuckets();
+                    boolean flag = false;
+                    for (Bucket bucket : list) {
+                        if (bucket.getName().equals(getLocalBucket_name())) {
+                            flag = true;
+                        }
+                    }
+                    if (!flag) {
+                        createBucket(getLocalBucket_name());
                     }
                 }
-                if (!flag) {
-                    createBucket(getLocalBucket_name());
-                }
-
-            }
-        }).start();
+            }).start();
+        }
     }
 
     private String getLocalBucket_name() {
@@ -234,9 +238,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt_upload:
                 if (!isUploaded) {
                     if (!TextUtils.isEmpty(uploadFilePath)) {
-                        progressDialog.setCancelable(false);
-                        progressDialog.show();
-                        new MyAsyncTask().execute(getLocalBucket_name(), uploadFilePath);
+                        if (connectivityStatus.isConnected()) {
+                            progressDialog.setCancelable(false);
+                            progressDialog.show();
+                            new MyAsyncTask().execute(getLocalBucket_name(), uploadFilePath);
+                        }else {
+                            Snackbar.make(v, "当前网络不可用，请连接网络", Snackbar.LENGTH_LONG)
+                                    .setAction("Action", null).show();
+                        }
                     } else {
                         Snackbar.make(v, "请先选择文件", Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
